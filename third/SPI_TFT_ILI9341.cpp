@@ -674,12 +674,6 @@ void SPI_TFT_ILI9341::Bitmap(unsigned int x, unsigned int y, unsigned int w, uns
     unsigned int  j;
     int padd;
     unsigned short *bitmap_ptr = (unsigned short *)bitmap;
-    #if defined TARGET_KL25Z  // 8 Bit SPI
-        unsigned short pix_temp;
-    #endif
-    
-    unsigned int i;
-    
     // the lines are padded to multiple of 4 bytes in a bitmap
     padd = -1;
     do {
@@ -688,31 +682,16 @@ void SPI_TFT_ILI9341::Bitmap(unsigned int x, unsigned int y, unsigned int w, uns
     window(x, y, w, h);
     bitmap_ptr += ((h - 1)* (w + padd));
     wr_cmd(0x2C);  // send pixel
-    #ifndef TARGET_KL25Z  // 16 Bit SPI 
     SPI::format(16,3);
-    #endif                            // switch to 16 bit Mode 3
     for (j = 0; j < h; j++) {         //Lines
-        for (i = 0; i < w; i++) {     // one line
-            #if defined TARGET_KL25Z  // 8 Bit SPI
-                pix_temp = *bitmap_ptr;
-                SPI::write(pix_temp >> 8);
-                SPI::write(pix_temp);
-                bitmap_ptr++;
-            #else
-                SPI::write(*bitmap_ptr);    // one line
-                bitmap_ptr++;
-            #endif
-        }
-        bitmap_ptr -= 2*w;
+        SPI::tx_buff(bitmap_ptr, w);
+        bitmap_ptr -= w;
         bitmap_ptr -= padd;
     }
     _cs = 1;
-    #ifndef TARGET_KL25Z  // 16 Bit SPI 
     SPI::format(8,3);
-    #endif
     WindowMax();
 }
-
 
 // local filesystem is not implemented in kinetis board , but you can add a SD card
 
